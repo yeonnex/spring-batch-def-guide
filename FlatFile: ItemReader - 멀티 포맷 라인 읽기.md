@@ -1,5 +1,7 @@
 # 배치 잡 설정 클래스
+
 ```java
+
 @Configuration
 @RequiredArgsConstructor
 public class CopyJobConfiguration {
@@ -79,6 +81,7 @@ public class CopyJobConfiguration {
 }
 
 ```
+
 `customerItemReader` 구성 코드가 좀 길어지기 시작했다.
 리더를 실제로 실행하면 아래와 같은 일이 일어난다.
 
@@ -95,6 +98,7 @@ public class CopyJobConfiguration {
 
 `Customer` 도메인 객체에는 `prefix` 필드가 없다. 따라서 `CustomerLineTokenizer` 가 `prefix`필드를 건너뛰게 해야한다.
 그러러면 두가지 작업을 해야한다
+
 - `DelimitedLineTokenizer` 를 구성할 떄 필드명 목록에서 `prefix`라는 이름 제외하기
 - 포함하고자 하는 필드의 인덱스 목록을 제공하기
 

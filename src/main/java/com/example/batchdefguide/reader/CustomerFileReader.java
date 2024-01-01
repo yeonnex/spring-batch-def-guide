@@ -4,16 +4,17 @@ import com.example.batchdefguide.domain.Customer;
 import com.example.batchdefguide.domain.Transaction;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
-import org.springframework.batch.item.ItemStreamReader;
+import org.springframework.batch.item.file.ResourceAwareItemReaderItemStream;
+import org.springframework.core.io.Resource;
 
 import java.util.ArrayList;
 
-public class CustomerFileReader implements ItemStreamReader<Customer> {
+public class CustomerFileReader implements ResourceAwareItemReaderItemStream<Customer> {
 
+    private final ResourceAwareItemReaderItemStream<Object> delegate;
     private Object cutItem = null;
-    private ItemStreamReader<Object> delegate;
 
-    public CustomerFileReader(ItemStreamReader<Object> delegate) {
+    public CustomerFileReader(ResourceAwareItemReaderItemStream<Object> delegate) {
         this.delegate = delegate;
     }
 
@@ -54,5 +55,10 @@ public class CustomerFileReader implements ItemStreamReader<Customer> {
     @Override
     public void close() throws ItemStreamException {
         delegate.close();
+    }
+
+    @Override
+    public void setResource(Resource resource) {
+        this.delegate.setResource(resource);
     }
 }
