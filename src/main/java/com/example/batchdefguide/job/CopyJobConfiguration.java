@@ -2,6 +2,7 @@ package com.example.batchdefguide.job;
 
 import com.example.batchdefguide.domain.Customer;
 import com.example.batchdefguide.job.mapper.TransactionFieldSetMapper;
+import com.example.batchdefguide.reader.CustomerFileReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -25,6 +26,9 @@ import org.springframework.core.io.Resource;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 각 Customer 객체를 대상으로 해당 고객에 얼마나 많은 거래 내역을 보유하고 있는지 출력하는 잡
+ */
 @Configuration
 @RequiredArgsConstructor
 public class CopyJobConfiguration {
@@ -33,7 +37,7 @@ public class CopyJobConfiguration {
 
     @Bean
     Job job() {
-        return jobBuilderFactory.get("delimitJob")
+        return jobBuilderFactory.get("customerMultiFormatJob")
                 .incrementer(new RunIdIncrementer())
                 .start(copyFileStep())
                 .build();
@@ -43,9 +47,14 @@ public class CopyJobConfiguration {
     Step copyFileStep() {
         return stepBuilderFactory.get("copyFileStep")
                 .chunk(10)
-                .reader(customerItemReader(null))
+                .reader(customerFileReader())
                 .writer(itemWriter())
                 .build();
+    }
+
+    @Bean
+    CustomerFileReader customerFileReader() {
+        return new CustomerFileReader(customerItemReader(null));
     }
 
     @Bean
