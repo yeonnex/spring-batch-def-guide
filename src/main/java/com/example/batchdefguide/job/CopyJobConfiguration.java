@@ -1,8 +1,7 @@
 package com.example.batchdefguide.job;
 
 import com.example.batchdefguide.domain.Customer;
-import com.example.batchdefguide.job.mapper.TransactionFieldSetMapper;
-import com.example.batchdefguide.reader.CustomerFileReader;
+import com.example.batchdefguide.domain.Transaction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -11,22 +10,13 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.MultiResourceItemReader;
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.builder.MultiResourceItemReaderBuilder;
-import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
-import org.springframework.batch.item.file.mapping.FieldSetMapper;
-import org.springframework.batch.item.file.mapping.PatternMatchingCompositeLineMapper;
-import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
-import org.springframework.batch.item.file.transform.LineTokenizer;
+import org.springframework.batch.item.xml.StaxEventItemReader;
+import org.springframework.batch.item.xml.builder.StaxEventItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 
 /**
  * 각 Customer 객체를 대상으로 해당 고객에 얼마나 많은 거래 내역을 보유하고 있는지 출력하는 잡
@@ -48,76 +38,37 @@ public class CopyJobConfiguration {
     @Bean
     Step copyFileStep() {
         return stepBuilderFactory.get("copyFileStep")
-                .chunk(10)
-                .reader(multiCustomerReader(null))
+                .<Customer, Customer>chunk(10)
+                .reader(customerFileReader(null))
                 .writer(itemWriter())
                 .build();
     }
 
     @Bean
     @StepScope
-    MultiResourceItemReader multiCustomerReader(@Value("#{'${customerFile}'.split(',')}") Resource[] inputFiles) {
-        return new MultiResourceItemReaderBuilder<>()
-                .name("multiCustomerReader")
-                .resources(inputFiles)
-                .delegate(customerFileReader())
+    StaxEventItemReader customerFileReader(@Value("#{jobParameters['customerFile']}") Resource inputFile) {
+        return new StaxEventItemReaderBuilder<>()
+                .name("customerFileReader")
+                .resource(inputFile)
+                .addFragmentRootElements("customer")
+                .unmarshaller(customerMarshaller())
                 .build();
     }
 
+    /**
+     * 각 XML 블록을 파싱하는 데 사용할 언마샬러 구성
+     *
+     * @return 언마샬러
+     */
     @Bean
-    CustomerFileReader customerFileReader() {
-        return new CustomerFileReader(customerItemReader());
+    Jaxb2Marshaller customerMarshaller() {
+        Jaxb2Marshaller jaxb2Marshaller = new Jaxb2Marshaller();
+        jaxb2Marshaller.setClassesToBeBound(Customer.class, Transaction.class);
+        return jaxb2Marshaller;
     }
 
     @Bean
-    @StepScope
-    FlatFileItemReader customerItemReader() {
-        return new FlatFileItemReaderBuilder()
-                .name("customerItemReader")
-                .lineMapper(lineTokenizer())
-                .build();
-    }
-
-    @Bean
-    PatternMatchingCompositeLineMapper lineTokenizer() {
-        Map<String, LineTokenizer> lineTokenizers = new HashMap<>(2);
-
-        lineTokenizers.put("CUST*", customerLineTokenizer());
-        lineTokenizers.put("TRANS*", transactionLineTokenizer());
-
-        Map<String, FieldSetMapper> fieldSetMappers = new HashMap<>(2);
-
-        BeanWrapperFieldSetMapper<Customer> customerFieldSetMapper = new BeanWrapperFieldSetMapper<>();
-
-        customerFieldSetMapper.setTargetType(Customer.class);
-        fieldSetMappers.put("CUST*", customerFieldSetMapper);
-        fieldSetMappers.put("TRANS*", new TransactionFieldSetMapper());
-
-        PatternMatchingCompositeLineMapper lineMappers = new PatternMatchingCompositeLineMapper();
-        lineMappers.setTokenizers(lineTokenizers);
-        lineMappers.setFieldSetMappers(fieldSetMappers);
-
-        return lineMappers;
-    }
-
-    @Bean
-    DelimitedLineTokenizer customerLineTokenizer() {
-        DelimitedLineTokenizer lineTokenizer = new DelimitedLineTokenizer();
-        lineTokenizer.setNames("firstName", "middleInitial", "lastName", "address", "city", "state", "zipCode");
-        // 로우에서 0번쨰 필드 즉 첫번쨰 필드의 값인 CUST or TRANS 여부를 나탸내는 건 제외하기 위함.
-        lineTokenizer.setIncludedFields(1, 2, 3, 4, 5, 6, 7);
-        return lineTokenizer;
-    }
-
-    @Bean
-    DelimitedLineTokenizer transactionLineTokenizer() {
-        DelimitedLineTokenizer lineTokenizer = new DelimitedLineTokenizer();
-        lineTokenizer.setNames("prefix", "accountNumber", "transactionDate", "amount");
-        return lineTokenizer;
-    }
-
-    @Bean
-    ItemWriter itemWriter() {
+    ItemWriter<Customer> itemWriter() {
         return items -> items.forEach(System.out::println);
     }
 }
