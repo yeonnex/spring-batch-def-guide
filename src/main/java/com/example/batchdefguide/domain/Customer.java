@@ -1,18 +1,15 @@
 package com.example.batchdefguide.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
 @Setter
 @Getter
-@XmlRootElement
 @NoArgsConstructor
 @AllArgsConstructor
 public class Customer {
@@ -23,10 +20,10 @@ public class Customer {
     private String city;
     private String state;
     private String zipCode;
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private List<Transaction> transactions;
 
-    @XmlElementWrapper(name = "transactions")
-    @XmlElement(name = "transaction")
     public void setTransactions(List<Transaction> transactions) {
         this.transactions = transactions;
     }
@@ -44,6 +41,8 @@ public class Customer {
             output.append(" has ");
             output.append(transactions.size());
             output.append(" transactions.");
+            output.append("amount detail info: ");
+            output.append(transactions.get(0).getAmount());
         } else {
             output.append(" has no transactions.");
         }
