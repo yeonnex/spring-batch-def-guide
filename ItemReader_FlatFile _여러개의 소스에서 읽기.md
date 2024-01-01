@@ -1,4 +1,5 @@
 # 개요
+
 스프링 배치는 멀티 포맷으로 구성된 레코드 예제에서 사용했던 것과 비슷한 패턴을 사용하는
 `MultiResourceItemReader` 라는 `ItemReader` 를 제공한다.
 
@@ -12,6 +13,7 @@
 `MultiResourceItemReader` 를 사용하도록 구성을 손봐야 한다.
 
 # 여러 고객의 파일을 처리하는 잡 구성
+
 ```java
 /**
  * 각 Customer 객체를 대상으로 해당 고객에 얼마나 많은 거래 내역을 보유하고 있는지 출력하는 잡
@@ -108,7 +110,9 @@ public class CopyJobConfiguration {
 }
 
 ```
+
 # 커맨드 라인 명령과 읽어들인 파일 확인
+
 ```shell
 $ java -jar build/libs/batch-def-guide-0.0.1-SNAPSHOT.jar --customerFile=/input/customerMultiFormat2.csv,/input/customerMultiFormat1.csv
 ```
@@ -117,6 +121,7 @@ $ java -jar build/libs/batch-def-guide-0.0.1-SNAPSHOT.jar --customerFile=/input/
 애플리케이션 CLI 인수로 파일 리스트를 주었다.
 
 잡 파라미터로 여러개의 갑을 주는 건 인식이 잘 안되는 것 같다... 나중에 다시 시도해보기!
+
 ```java
     @Bean
     @StepScope
@@ -130,6 +135,7 @@ $ java -jar build/libs/batch-def-guide-0.0.1-SNAPSHOT.jar --customerFile=/input/
 ```
 
 # 마무리
+
 지금까지 플랫 파일과 연관된 여러 시나리오를 다뤘다.
 
 - 고정 너비 레코드 읽기
@@ -138,7 +144,7 @@ $ java -jar build/libs/batch-def-guide-0.0.1-SNAPSHOT.jar --customerFile=/input/
 - 다중 파일 입력 읽기
 
 그러나 처리 대상으로 플랫 파일 타입만 있는 것은 아니다.
-XML 은 인기가 시들해진 입력 타입이긴 하지만 여전히 엔터프라이즈 환경에서 파일 기반의 
+XML 은 인기가 시들해진 입력 타입이긴 하지만 여전히 엔터프라이즈 환경에서 파일 기반의
 상당량을 차지하고 있다.
 
 다음에는 XML 파일을 읽어들이는 법을 살펴보자.
